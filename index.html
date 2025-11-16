@@ -1,196 +1,95 @@
-<!DOCTYPE html><html lang="ko">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>횡격막 호흡 1분 타이머</title>
+  <meta charset="UTF-8">
+  <title>1분 횡경막 호흡 타이머</title>
   <style>
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: Arial, sans-serif;
       text-align: center;
-      padding: 30px;
+      background: #ffffff;
+      padding-top: 40px;
     }
-    h1 {
-      font-size: 24px;
-      margin-bottom: 10px;
+    #timer {
+      font-size: 48px;
+      margin-top: 20px;
+      font-weight: bold;
     }
-    p {
-      margin: 0 0 20px;
-      color: #444;
-      font-size: 14px;
+    #message {
+      font-size: 28px;
+      margin-top: 15px;
     }
     button {
-      padding: 12px 24px;
-      font-size: 18px;
-      border-radius: 999px;
+      margin-top: 30px;
+      font-size: 20px;
+      padding: 12px 28px;
+      border-radius: 10px;
       border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-    }
-    button:disabled {
-      opacity: 0.5;
-      cursor: default;
-      box-shadow: none;
-    }
-    #status {
-      margin-top: 25px;
-      font-size: 22px;
-      font-weight: bold;
-      min-height: 1.5em;
-    }
-    #countdown {
-      margin-top: 8px;
-      font-size: 18px;
-      color: #555;
-      min-height: 1.2em;
-    }
-    .circle-wrapper {
-      margin: 30px auto 10px;
-      width: 200px;
-      height: 200px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .circle {
-      width: 140px;
-      height: 140px;
-      border-radius: 50%;
-      border: 4px solid rgba(0,0,0,0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.8s ease-in-out, border-color 0.8s ease-in-out;
-    }
-    .circle.inhale {
-      transform: scale(1.25);
-      border-color: rgba(0,150,255,0.7);
-    }
-    .circle.hold {
-      transform: scale(1.15);
-      border-color: rgba(0,200,150,0.7);
-    }
-    .circle.exhale {
-      transform: scale(0.9);
-      border-color: rgba(255,150,0,0.7);
-    }
-    .circle-inner-text {
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
+      background: #4CAF50;
+      color: white;
     }
   </style>
 </head>
 <body>
-  <h1>횡격막 호흡 1분 타이머</h1>
-  <p>4초 들이쉬기 → 1초 멈추기 → 6초 내쉬기 · 총 약 1분 반복</p>
-  <button id="startBtn">시작 ▶</button>  <div class="circle-wrapper">
-    <div id="circle" class="circle">
-      <div id="circleText" class="circle-inner-text">대기 중</div>
-    </div>
-  </div>  <div id="status"></div>
-  <div id="countdown"></div>  <script>
-    // 음성 출력 함수
-    function speak(text) {
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = "ko-KR";
-      const voices = speechSynthesis.getVoices();
-      const female = voices.find(v => (
-        v.lang.startsWith("ko") && (v.name.includes("Female") || v.name.includes("여") || v.name.includes("woman"))
-      )) || voices.find(v => v.lang.startsWith("ko")) || voices[0];
-      if (female) utter.voice = female;
-      speechSynthesis.speak(utter);
+
+<h1>1분 횡경막 호흡 타이머</h1>
+<div id="message">시작 버튼을 눌러주세요</div>
+<div id="timer">60</div>
+
+<button onclick="startBreathing()">▶ 시작</button>
+
+<script>
+let countdown;
+let audioIndex = 0;
+
+const messages = [
+  ["숨 들이마셔요 (4초)", 4],
+  ["잠시 멈춰요 (1초)", 1],
+  ["천천히 내쉬어요 (6초)", 6],
+  ["잠시 멈춰요 (1초)", 1]
+];
+
+const voice = new SpeechSynthesisUtterance();
+voice.lang = "ko-KR";
+voice.pitch = 1.2;
+
+function speak(text) {
+  voice.text = text;
+  speechSynthesis.speak(voice);
+}
+
+function startBreathing() {
+  let total = 60;
+  let step = 0;
+  document.getElementById("timer").innerHTML = total;
+
+  countdown = setInterval(() => {
+    total--;
+    document.getElementById("timer").innerHTML = total;
+
+    if (total <= 0) {
+      clearInterval(countdown);
+      speak("완료되었습니다. 수고하셨어요.");
     }
 
-    const startBtn = document.getElementById("startBtn");
-    const statusEl = document.getElementById("status");
-    const countdownEl = document.getElementById("countdown");
-    const circle = document.getElementById("circle");
-    const circleText = document.getElementById("circleText");
+  }, 1000);
 
-    // 브라우저에 따라 getVoices가 늦게 로딩되는 경우를 대비해 이벤트 리스너 등록
-    if (window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        // 한 번이라도 로드되도록 호출
-        speechSynthesis.getVoices();
-      };
-    }
+  runStep(step);
+}
 
-    function runBreathCycle(cycleIndex, totalCycles, onDone) {
-      const sequence = [
-        { action: "들이마시기", seconds: 4, css: "inhale" },
-        { action: "잠시 멈추기", seconds: 1, css: "hold" },
-        { action: "내쉬기", seconds: 6, css: "exhale" }
-      ];
+function runStep(step) {
+  if (step >= messages.length) step = 0;
 
-      let step = 0;
+  const [text, duration] = messages[step];
 
-      function runStep() {
-        if (step >= sequence.length) {
-          onDone();
-          return;
-        }
+  document.getElementById("message").innerHTML = text;
+  speak(text);
 
-        const { action, seconds, css } = sequence[step];
-        circle.classList.remove("inhale", "hold", "exhale");
-        circle.classList.add(css);
+  setTimeout(() => {
+    runStep(step + 1);
+  }, duration * 1000);
+}
+</script>
 
-        statusEl.innerText = `${cycleIndex + 1}번째 사이클 - ${action}`;
-        circleText.innerText = action;
-        countdownEl.innerText = `${seconds}초`;
-
-        // 안내 음성 (행동)
-        speak(action);
-
-        // 1초마다 숫자 세는 음성 + 화면 카운트다운
-        for (let i = 1; i <= seconds; i++) {
-          setTimeout(() => {
-            const remain = seconds - i;
-            countdownEl.innerText = remain > 0 ? `${remain}초` : "";
-            speak(i.toString());
-          }, i * 1000);
-        }
-
-        // 다음 스텝으로
-        setTimeout(() => {
-          step++;
-          runStep();
-        }, (seconds + 0.3) * 1000);
-      }
-
-      runStep();
-    }
-
-    function startBreath() {
-      if (!window.speechSynthesis) {
-        alert("이 브라우저에서는 음성 안내를 지원하지 않을 수 있습니다.");
-      }
-
-      startBtn.disabled = true;
-      statusEl.innerText = "준비...";
-      circleText.innerText = "시작";
-      countdownEl.innerText = "";
-
-      const totalCycles = 5; // 4+1+6=11초 × 5 ≒ 55초 (1분 근처)
-      let currentCycle = 0;
-
-      function nextCycle() {
-        if (currentCycle >= totalCycles) {
-          circle.classList.remove("inhale", "hold", "exhale");
-          circleText.innerText = "완료";
-          statusEl.innerText = "1분 호흡이 끝났습니다. 천천히 눈을 떠주세요.";
-          countdownEl.innerText = "";
-          startBtn.disabled = false;
-          return;
-        }
-
-        runBreathCycle(currentCycle, totalCycles, () => {
-          currentCycle++;
-          nextCycle();
-        });
-      }
-
-      nextCycle();
-    }
-
-    startBtn.addEventListener("click", startBreath);
-  </script></body>
+</body>
 </html>
