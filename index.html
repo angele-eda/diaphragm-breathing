@@ -1,95 +1,488 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>1분 횡경막 호흡 타이머</title>
+  <meta charset="UTF-8" />
+  <title>1분 횡격막 호흡 타이머</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    :root {
+      --bg: #f7fafc;
+      --card-bg: #ffffff;
+      --accent: #2b6cb0;
+      --accent-soft: #bee3f8;
+      --text-main: #1a202c;
+      --text-sub: #4a5568;
+      --danger: #e53e3e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      margin-top: 16px;
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+      padding: 20px 18px 24px;
+    }
+
+    .title {
+      font-size: clamp(1.4rem, 5vw, 1.7rem);
+      font-weight: 700;
+      color: var(--text-main);
       text-align: center;
-      background: #ffffff;
-      padding-top: 40px;
+      margin-bottom: 6px;
     }
-    #timer {
-      font-size: 48px;
-      margin-top: 20px;
-      font-weight: bold;
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-sub);
+      text-align: center;
+      margin-bottom: 18px;
     }
-    #message {
-      font-size: 28px;
-      margin-top: 15px;
+
+    .circle-wrapper {
+      margin: 18px auto 8px;
+      width: min(60vw, 220px);
+      height: min(60vw, 220px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+
+    .circle {
+      width: 70%;
+      height: 70%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #ebf8ff, #bee3f8);
+      border: 4px solid rgba(37, 99, 235, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.7s ease-in-out, border-color 0.4s ease-in-out;
+    }
+
+    .circle.inhale {
+      transform: scale(1.25);
+      border-color: rgba(56, 161, 105, 0.8);
+    }
+
+    .circle.hold {
+      transform: scale(1.1);
+      border-color: rgba(237, 137, 54, 0.8);
+    }
+
+    .circle.exhale {
+      transform: scale(0.9);
+      border-color: rgba(59, 130, 246, 0.9);
+    }
+
+    .circle-text {
+      font-size: clamp(1rem, 4vw, 1.2rem);
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: center;
+      padding: 0 4px;
+    }
+
+    .phase-info {
+      margin-top: 6px;
+      text-align: center;
+      font-size: 0.95rem;
+      color: var(--text-sub);
+    }
+
+    .timers {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin-top: 14px;
+    }
+
+    .timer-box {
+      min-width: 70px;
+      padding: 6px 10px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      color: var(--text-main);
+      text-align: center;
+    }
+
+    .timer-label {
+      font-size: 0.7rem;
+      opacity: 0.8;
+    }
+
+    .timer-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .controls {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+    }
+
+    input[type="number"] {
+      width: 64px;
+      padding: 4px 6px;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      border: 1px solid #cbd5e0;
+      text-align: center;
+      outline: none;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(66, 153, 225, 0.6);
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
     button {
-      margin-top: 30px;
-      font-size: 20px;
-      padding: 12px 28px;
-      border-radius: 10px;
+      flex: 1;
+      padding: 10px;
+      border-radius: 999px;
       border: none;
-      background: #4CAF50;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.2s;
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3182ce, #2b6cb0);
       color: white;
+      box-shadow: 0 8px 16px rgba(49, 130, 206, 0.35);
+    }
+
+    .btn-secondary {
+      background: #edf2f7;
+      color: #2d3748;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .cycle-status {
+      margin-top: 6px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+    }
+
+    .footer {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 0.7rem;
+      color: #a0aec0;
     }
   </style>
 </head>
 <body>
+  <div class="app">
+    <div class="title">1분 횡격막 호흡 타이머</div>
+    <div class="subtitle">4초 들숨 · 1초 멈춤 · 6초 날숨 · 여성 음성 + 초 단위 카운트</div>
 
-<h1>1분 횡경막 호흡 타이머</h1>
-<div id="message">시작 버튼을 눌러주세요</div>
-<div id="timer">60</div>
+    <div class="circle-wrapper">
+      <div id="circle" class="circle">
+        <div id="circleText" class="circle-text">대기 중</div>
+      </div>
+    </div>
 
-<button onclick="startBreathing()">▶ 시작</button>
+    <div id="phaseInfo" class="phase-info">시작 버튼을 누르면 호흡이 시작됩니다.</div>
 
-<script>
-let countdown;
-let audioIndex = 0;
+    <div class="timers">
+      <div class="timer-box">
+        <div class="timer-label">현재 단계 남은 초</div>
+        <div id="phaseSeconds" class="timer-value">0</div>
+      </div>
+      <div class="timer-box">
+        <div class="timer-label">총 남은 초</div>
+        <div id="totalSeconds" class="timer-value">0</div>
+      </div>
+    </div>
 
-const messages = [
-  ["숨 들이마셔요 (4초)", 4],
-  ["잠시 멈춰요 (1초)", 1],
-  ["천천히 내쉬어요 (6초)", 6],
-  ["잠시 멈춰요 (1초)", 1]
-];
+    <div class="controls">
+      <div class="row">
+        <span>반복 횟수(사이클):</span>
+        <input
+          type="number"
+          id="cycleInput"
+          min="1"
+          max="30"
+          value="5"
+          inputmode="numeric"
+        />
+        <span>회</span>
+      </div>
 
-const voice = new SpeechSynthesisUtterance();
-voice.lang = "ko-KR";
-voice.pitch = 1.2;
+      <div class="buttons">
+        <button id="startBtn" class="btn-primary">▶ 시작</button>
+        <button id="stopBtn" class="btn-secondary" disabled>⏹ 정지</button>
+      </div>
 
-function speak(text) {
-  voice.text = text;
-  speechSynthesis.speak(voice);
-}
+      <div id="cycleStatus" class="cycle-status">
+        아직 시작하지 않았어요.
+      </div>
+    </div>
 
-function startBreathing() {
-  let total = 60;
-  let step = 0;
-  document.getElementById("timer").innerHTML = total;
+    <div class="footer">angele-eda · diaphragmatic breathing</div>
+  </div>
 
-  countdown = setInterval(() => {
-    total--;
-    document.getElementById("timer").innerHTML = total;
+  <script>
+    // ===== 음성 설정 =====
+    let voiceLoaded = false;
 
-    if (total <= 0) {
-      clearInterval(countdown);
-      speak("완료되었습니다. 수고하셨어요.");
+    function getKoreanFemaleVoice() {
+      const voices = speechSynthesis.getVoices();
+      // ko-KR 여성 목소리 우선
+      let v =
+        voices.find(
+          (vv) =>
+            vv.lang.startsWith("ko") &&
+            (vv.name.includes("Female") ||
+              vv.name.includes("여") ||
+              vv.name.includes("woman"))
+        ) ||
+        voices.find((vv) => vv.lang.startsWith("ko")) ||
+        voices[0];
+      return v || null;
     }
 
-  }, 1000);
+    function speak(text) {
+      if (!("speechSynthesis" in window)) return;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "ko-KR";
+      const v = getKoreanFemaleVoice();
+      if (v) utter.voice = v;
+      speechSynthesis.speak(utter);
+    }
 
-  runStep(step);
-}
+    if ("speechSynthesis" in window) {
+      speechSynthesis.onvoiceschanged = () => {
+        voiceLoaded = true;
+      };
+      // 강제로 한 번 불러서 로드
+      speechSynthesis.getVoices();
+    }
 
-function runStep(step) {
-  if (step >= messages.length) step = 0;
+    // ===== DOM 요소 =====
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const cycleInput = document.getElementById("cycleInput");
+    const circle = document.getElementById("circle");
+    const circleText = document.getElementById("circleText");
+    const phaseInfo = document.getElementById("phaseInfo");
+    const phaseSecondsEl = document.getElementById("phaseSeconds");
+    const totalSecondsEl = document.getElementById("totalSeconds");
+    const cycleStatus = document.getElementById("cycleStatus");
 
-  const [text, duration] = messages[step];
+    // ===== 호흡 패턴 정의 =====
+    const pattern = [
+      {
+        key: "inhale",
+        label: "코로 천천히 숨 들이마시기",
+        short: "들이마시기",
+        seconds: 4
+      },
+      {
+        key: "hold",
+        label: "숨 잠깐 멈추기",
+        short: "멈추기",
+        seconds: 1
+      },
+      {
+        key: "exhale",
+        label: "입으로 길게 내쉬기",
+        short: "내쉬기",
+        seconds: 6
+      }
+    ];
 
-  document.getElementById("message").innerHTML = text;
-  speak(text);
+    let isRunning = false;
+    let currentCycle = 0;
+    let totalCycles = 5;
+    let totalSecondsLeft = 0;
+    let phaseTimer = null;
 
-  setTimeout(() => {
-    runStep(step + 1);
-  }, duration * 1000);
-}
-</script>
+    function updateCircleClass(key) {
+      circle.classList.remove("inhale", "hold", "exhale");
+      if (key) circle.classList.add(key);
+    }
 
+    function resetUI() {
+      isRunning = false;
+      currentCycle = 0;
+      totalSecondsLeft = 0;
+      phaseSecondsEl.textContent = "0";
+      totalSecondsEl.textContent = "0";
+      circleText.textContent = "대기 중";
+      phaseInfo.textContent = "시작 버튼을 누르면 호흡이 시작됩니다.";
+      cycleStatus.textContent = "아직 시작하지 않았어요.";
+      updateCircleClass(null);
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      if (phaseTimer) clearInterval(phaseTimer);
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function startBreathing() {
+      if (isRunning) return;
+
+      totalCycles = parseInt(cycleInput.value, 10) || 1;
+      if (totalCycles < 1) totalCycles = 1;
+
+      const secondsPerCycle = pattern.reduce(
+        (sum, step) => sum + step.seconds,
+        0
+      );
+      totalSecondsLeft = totalCycles * secondsPerCycle;
+
+      isRunning = true;
+      currentCycle = 1;
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+
+      cycleStatus.textContent = `총 ${totalCycles}회 중 1번째 사이클`;
+      totalSecondsEl.textContent = totalSecondsLeft.toString();
+
+      speak(
+        `횡격막 호흡을 시작합니다. 총 ${totalCycles}회 반복합니다.`
+      );
+
+      runPatternCycle(0);
+    }
+
+    function runPatternCycle(stepIndex) {
+      if (!isRunning) return;
+
+      if (currentCycle > totalCycles) {
+        finishBreathing();
+        return;
+      }
+
+      if (stepIndex >= pattern.length) {
+        // 다음 사이클로
+        currentCycle++;
+        if (currentCycle > totalCycles) {
+          finishBreathing();
+          return;
+        }
+        cycleStatus.textContent = `총 ${totalCycles}회 중 ${currentCycle}번째 사이클`;
+        runPatternCycle(0);
+        return;
+      }
+
+      const step = pattern[stepIndex];
+      let phaseSecondsLeft = step.seconds;
+
+      circleText.textContent = step.short;
+      phaseInfo.textContent = `${currentCycle}번째 사이클 · ${
+        step.label
+      } (${step.seconds}초)`;
+      phaseSecondsEl.textContent = phaseSecondsLeft.toString();
+      totalSecondsEl.textContent = totalSecondsLeft.toString();
+      updateCircleClass(step.key);
+
+      speak(step.label);
+
+      let count = 0;
+
+      if (phaseTimer) clearInterval(phaseTimer);
+
+      phaseTimer = setInterval(() => {
+        if (!isRunning) {
+          clearInterval(phaseTimer);
+          return;
+        }
+
+        count++;
+        // 숫자 음성
+        speak(count.toString());
+
+        phaseSecondsLeft--;
+        totalSecondsLeft--;
+
+        if (phaseSecondsLeft < 0) phaseSecondsLeft = 0;
+        if (totalSecondsLeft < 0) totalSecondsLeft = 0;
+
+        phaseSecondsEl.textContent = phaseSecondsLeft.toString();
+        totalSecondsEl.textContent = totalSecondsLeft.toString();
+
+        if (count >= step.seconds) {
+          clearInterval(phaseTimer);
+          setTimeout(() => runPatternCycle(stepIndex + 1), 300);
+        }
+      }, 1000);
+    }
+
+    function finishBreathing() {
+      isRunning = false;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      updateCircleClass(null);
+      circleText.textContent = "완료";
+      phaseInfo.textContent = "1분 호흡이 끝났습니다. 몸의 변화를 느껴보세요.";
+      cycleStatus.textContent = `총 ${totalCycles}회 호흡 완료`;
+      phaseSecondsEl.textContent = "0";
+      totalSecondsEl.textContent = "0";
+      speak("수고하셨습니다. 호흡이 모두 완료되었습니다.");
+    }
+
+    function stopBreathing() {
+      if (!isRunning) return;
+      resetUI();
+      speak("호흡을 중지했습니다.");
+    }
+
+    startBtn.addEventListener("click", startBreathing);
+    stopBtn.addEventListener("click", stopBreathing);
+
+    // 초기화
+    resetUI();
+  </script>
 </body>
 </html>
