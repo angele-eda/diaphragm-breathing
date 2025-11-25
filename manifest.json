@@ -1,7 +1,9 @@
 {
-  "name": "횡격막 호흡 앱",
-  "short_name": "호흡 앱",
-  "description": "4-2-6 / 4-7-8 / 박스 호흡으로 몸과 마음을 안정시키는 호흡 앱",
+  "id": "/diaphragm-breathing/",
+  "name": "Breathing Timer - 횡격막 호흡",
+  "short_name": "호흡 타이머",
+  "description": "4-2-6 / 4-7-8 / 4-4-4-4 박스 호흡으로 몸과 마음을 안정시키는 Breathing Timer 앱입니다.",
+  "lang": "ko-KR",
   "start_url": "/diaphragm-breathing/",
   "scope": "/diaphragm-breathing/",
   "display": "standalone",
@@ -12,12 +14,14 @@
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
