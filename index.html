@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>횡격막 호흡 APP</title>
+  <title>Breathing Timer - 횡격막 호흡</title>
 
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4b82ff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
 
   <style>
     body {
@@ -36,13 +40,14 @@
       gap: 10px;
     }
 
-    button {
+    .mode-btn {
       padding: 12px 20px;
       border: none;
       border-radius: 10px;
       background: #4B82FF;
       color: white;
       font-size: 16px;
+      font-weight: 600;
     }
 
     #modeImage {
@@ -59,122 +64,211 @@
     }
 
     #banner {
-      margin-top: 22px;
+      margin: 22px 0 70px; /* 아래 설치바랑 안 겹치게 여유 */
       width: 100%;
+    }
+
+    /* 🔻 하단 설치/바로가기 바 */
+    #installBar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.96);
+      border-top: 1px solid #d0d6e6;
+      padding: 8px 10px 10px;
+      display: none; /* beforeinstallprompt 뜰 때만 보여줌 */
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+      z-index: 999;
+    }
+
+    #installBarInner {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .install-btn {
+      flex: 1;
+      padding: 10px 6px;
+      font-size: 13px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    #btnInstall {
+      background: #4B82FF;
+      color: #fff;
+    }
+
+    #btnHomeHint {
+      background: #eef2f9;
+      color: #333;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Hero 이미지 -->
+  <!-- 상단 히어로 이미지 -->
   <header>
-    <img src="img/hero_main.png" />
+    <img src="img/hero_main.png" alt="Breathing Timer Hero">
   </header>
 
   <h2>호흡법 선택</h2>
 
   <div class="btnWrap">
-    <button onclick="selectMode('426')">4-2-6 호흡</button>
-    <button onclick="selectMode('478')">4-7-8 수면 호흡</button>
-    <button onclick="selectMode('box')">4-4-4-4 박스 호흡</button>
+    <button class="mode-btn" onclick="selectMode('426')">4-2-6 호흡</button>
+    <button class="mode-btn" onclick="selectMode('478')">4-7-8 수면 호흡</button>
+    <button class="mode-btn" onclick="selectMode('box')">4-4-4-4 박스 호흡</button>
   </div>
 
   <!-- 선택된 호흡 이미지 -->
-  <img id="modeImage" src="img/426.png">
+  <img id="modeImage" src="img/426.png" alt="호흡 모드 이미지">
 
   <!-- 타이머 표시 -->
   <div id="timer">준비</div>
 
-  <!-- 배너 -->
-  <img id="banner" src="img/banner_sleep.png">
+  <!-- 수면용 배너 -->
+  <img id="banner" src="img/banner_sleep.png" alt="수면 배너">
 
-  <script>
-    let inhaleSound = new Audio("sound/soft_sleep_chime.wav");
-    let exhaleSound = new Audio("sound/soft_click_0.2s.wav");
+  <!-- 🔻 하단: 앱 설치 / 홈 바로가기 안내 바 -->
+  <div id="installBar">
+    <div id="installBarInner">
+      <button class="install-btn" id="btnInstall">📲 앱 설치</button>
+      <button class="install-btn" id="btnHomeHint">🏠 홈 바로가기 안내</button>
+    </div>
+  </div>
 
-    let timerEl = document.getElementById("timer");
-    let modeImage = document.getElementById("modeImage");
+<script>
+  // ====== 호흡 타이머 + 숨소리 ======
+  const inhaleSound = new Audio("sound/soft_sleep_chime.wav");
+  const exhaleSound = new Audio("sound/bells_sound1_custom.wav");
 
-    let breathingPattern = [];
-    let index = 0;
-    let running = false;
+  const timerEl = document.getElementById("timer");
+  const modeImage = document.getElementById("modeImage");
 
-    function selectMode(mode) {
-      running = false;
-      index = 0;
+  let breathingPattern = [];
+  let stepIndex = 0;
+  let running = false;
 
-      if (mode === "426") {
-        modeImage.src = "img/426.png";
-        breathingPattern = [
-          { state: "들숨", sec: 4 },
-          { state: "멈춤", sec: 2 },
-          { state: "날숨", sec: 6 },
-        ];
+  function selectMode(mode) {
+    running = false;
+    stepIndex = 0;
+
+    if (mode === "426") {
+      modeImage.src = "img/426.png";
+      breathingPattern = [
+        { state: "들숨", sec: 4 },
+        { state: "멈춤", sec: 2 },
+        { state: "날숨", sec: 6 }
+      ];
+    } else if (mode === "478") {
+      modeImage.src = "img/478.png";
+      breathingPattern = [
+        { state: "들숨", sec: 4 },
+        { state: "멈춤", sec: 7 },
+        { state: "날숨", sec: 8 }
+      ];
+    } else if (mode === "box") {
+      modeImage.src = "img/box.png";
+      breathingPattern = [
+        { state: "들숨", sec: 4 },
+        { state: "멈춤", sec: 4 },
+        { state: "날숨", sec: 4 },
+        { state: "멈춤", sec: 4 }
+      ];
+    }
+
+    startBreathing();
+  }
+
+  function startBreathing() {
+    if (!breathingPattern.length) return;
+    running = true;
+    stepIndex = 0;
+    runStep();
+  }
+
+  function runStep() {
+    if (!running) return;
+
+    const step = breathingPattern[stepIndex];
+    let remaining = step.sec;
+
+    timerEl.textContent = `${step.state} (${remaining}s)`;
+
+    if (step.state === "들숨") inhaleSound.play();
+    if (step.state === "날숨") exhaleSound.play();
+
+    const interval = setInterval(() => {
+      if (!running) {
+        clearInterval(interval);
+        return;
       }
 
-      if (mode === "478") {
-        modeImage.src = "img/478.png";
-        breathingPattern = [
-          { state: "들숨", sec: 4 },
-          { state: "멈춤", sec: 7 },
-          { state: "날숨", sec: 8 },
-        ];
+      remaining--;
+      timerEl.textContent = `${step.state} (${remaining}s)`;
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        stepIndex = (stepIndex + 1) % breathingPattern.length;
+        runStep();
       }
+    }, 1000);
+  }
 
-      if (mode === "box") {
-        modeImage.src = "img/box.png";
-        breathingPattern = [
-          { state: "들숨", sec: 4 },
-          { state: "멈춤", sec: 4 },
-          { state: "날숨", sec: 4 },
-          { state: "멈춤", sec: 4 },
-        ];
-      }
+  // ====== PWA 설치 / 하단 바 제어 ======
+  let deferredPrompt = null;
+  const installBar = document.getElementById("installBar");
+  const btnInstall = document.getElementById("btnInstall");
+  const btnHomeHint = document.getElementById("btnHomeHint");
 
-      startBreathing();
+  // 크롬이 "설치 가능"하다고 판단하면 발생
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();           // 기본 배너 막고
+    deferredPrompt = e;           // 이벤트 저장
+    installBar.style.display = "block";  // 하단 바 표시
+  });
+
+  // 📲 앱 설치 버튼
+  btnInstall.addEventListener("click", async () => {
+    if (!deferredPrompt) {
+      alert("이미 설치되어 있거나, 이 브라우저에서는 설치를 지원하지 않습니다.");
+      return;
     }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log("사용자 선택:", outcome);
+    deferredPrompt = null;
+    installBar.style.display = "none";   // 선택 후 바 숨기기
+  });
 
-    function startBreathing() {
-      running = true;
-      index = 0;
-      runStep();
+  // 🏠 홈 바로가기 안내 버튼
+  btnHomeHint.addEventListener("click", () => {
+    const ua = navigator.userAgent;
+    if (/SamsungBrowser/i.test(ua)) {
+      alert("삼성 인터넷 브라우저 메뉴(☰) > '홈 화면에 추가'를 눌러서 바로가기를 만들 수 있어요.");
+    } else if (/Chrome/i.test(ua) && /Android/i.test(ua)) {
+      alert("크롬 오른쪽 상단 ⋮ 메뉴 > '홈 화면에 추가' 또는 '앱 설치'를 선택하면 됩니다.");
+    } else if (/iPhone|iPad|iPod/i.test(ua)) {
+      alert("Safari 하단 공유버튼(⬆️) > '홈 화면에 추가'를 눌러서 바로가기를 만들 수 있어요.");
+    } else {
+      alert("브라우저 메뉴에서 '홈 화면에 추가' 또는 '앱 설치' 메뉴를 찾아보세요.");
     }
+  });
 
-    function runStep() {
-      if (!running) return;
+  // ====== Service Worker 등록 ======
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js")
+      .then(() => console.log("Service Worker 등록 완료"))
+      .catch(err => console.log("SW 등록 오류:", err));
+  }
+</script>
 
-      let step = breathingPattern[index];
-      timerEl.textContent = `${step.state} (${step.sec}s)`;
-
-      // 숨소리
-      if (step.state === "들숨") inhaleSound.play();
-      if (step.state === "날숨") exhaleSound.play();
-
-      let sec = step.sec;
-
-      let interval = setInterval(() => {
-        if (!running) {
-          clearInterval(interval);
-          return;
-        }
-
-        sec--;
-        timerEl.textContent = `${step.state} (${sec}s)`;
-
-        if (sec <= 0) {
-          clearInterval(interval);
-          index = (index + 1) % breathingPattern.length;
-          runStep();
-        }
-
-      }, 1000);
-    }
-
-    // serviceWorker 등록
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js");
-    }
-  </script>
 </body>
 </html>
