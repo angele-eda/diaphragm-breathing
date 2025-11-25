@@ -1,13 +1,12 @@
 {
-  "name": "1분 횡격막 호흡 타이머",
-  "short_name": "호흡 타이머",
-  "lang": "ko-KR",
-  "start_url": "/diaphragm-breathing/?source=pwa",
-  "scope": "/diaphragm-breathing/",
+  "name": "횡격막 호흡 앱",
+  "short_name": "호흡 앱",
+  "description": "4-2-6 / 4-7-8 / 박스 호흡으로 몸과 마음을 안정시키는 호흡 앱",
+  "start_url": "index.html",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f7fafc",
-  "theme_color": "#2b6cb0",
+  "background_color": "#eef2f9",
+  "theme_color": "#4b82ff",
   "icons": [
     {
       "src": "icons/icon-192.png",
